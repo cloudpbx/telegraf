@@ -1,7 +1,7 @@
 package traceroute
 
 import (
-	"exec"
+	"os/exec"
 	"time"
 
 	"github.com/influxdata/telegraf"
