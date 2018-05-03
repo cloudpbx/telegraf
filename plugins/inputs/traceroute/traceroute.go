@@ -1,11 +1,14 @@
 package traceroute
 
 import (
+	//"fmt"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/internal"
+	"github.com/influxdata/telegraf/plugins/inputs"
 )
 
 type HostTracerouter func(timeout float64, args ...string) (string, error)
@@ -17,7 +20,7 @@ type Traceroute struct {
 	Urls []string
 
 	// host traceroute function
-	hostTraceroute HostTracerouter
+	tracerouteMethod HostTracerouter
 }
 
 // Description will appear directly above the plugin definition in the config file
@@ -42,16 +45,45 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 }
 
 func hostTraceRouter(timeout float64, args ...string) (string, error) {
-	var c *exec.Cmd // FIXME
+	bin, err := exec.LookPath("traceroute")
+	if err != nil {
+		return "", err
+	}
+	c := exec.Command(bin, args...)
 	out, err := internal.CombinedOutputTimeout(c, time.Second*time.Duration(timeout+5))
 	return string(out), err
 }
 
 func (t *Traceroute) args(url string) []string {
-	args := []string{""}
+	args := []string{url}
+	//args = append(args, url)
 	return args
 }
 
-func processTraceroute(out string) error {
-	return nil
+type TracerouteHopInfo struct {
+	PacketNum int // 1-based index of the column number (usually [1:3])
+	Fqdn      string
+	Ip        string
+	RTT       float32 //milliseconds
+}
+
+func processTracerouteOutput(out string) (int, error) {
+	var numHops int = -1
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	numHops = len(lines) - 1
+	return numHops, nil
+}
+
+// processTracerouteHopLine parses
+func processTracerouteHopLine(line string) (int, []TracerouteHopInfo, error) {
+	hopInfo := []TracerouteHopInfo{}
+	return 0, hopInfo, nil
+}
+
+func init() {
+	inputs.Add("traceroute", func() telegraf.Input {
+		return &Traceroute{
+			tracerouteMethod: hostTraceRouter,
+		}
+	})
 }
