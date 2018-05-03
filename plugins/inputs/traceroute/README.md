@@ -4,37 +4,38 @@ The traceroute plugin provides routing information given end host.
 
 ### Configuration:
 
-This section contains the default TOML to configure the plugin.  You can
-generate it using `telegraf --usage <plugin-name>`.
-
 ```toml
-# Description
-[[inputs.example]]
-  example_option = "example_value"
+# NOTE: this plugin forks the traceroute command. You may need to set capabilities
+# via setcap cap_net_raw+p /bin/traceroute
+[[inputs.traceroute]]
+  ## List of urls to traceroute
+  urls = ["www.google.com"] # required
+  # interface = ""
 ```
 
 ### Metrics:
 
-Here you should add an optional description and links to where the user can
-get more information about the measurements.
-
-If the output is determined dynamically based on the input source, or there
-are more metrics than can reasonably be listed, describe how the input is
-mapped to the output.
-
-- measurement1
+- traceroute
   - tags:
-    - tag1 (optional description)
-    - tag2
+    - target_fqdn 
+    - target_ip (IPv4 string)
   - fields:
+    - result_code
+        - 0:success
+      	- 1:no such host
     - field1 (type, unit)
     - field2 (float, percent)
 
-- measurement2
+- traceroute_hop_data
   - tags:
-    - tag3
+    - target_fqdn
+    - target_ip (IPv4 string)
+    - hop_number
+    - column_number (zero-indexed value representing which column of the traceroute output the data resides in)
   - fields:
-    - field3 (integer, bytes)
+    - hop_fqdn
+    - hop_ip (IPv4 string)
+    - rtt (round trip time in ms)
 
 ### Sample Queries:
 
