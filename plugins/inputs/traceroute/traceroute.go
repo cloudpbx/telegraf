@@ -3,6 +3,8 @@ package traceroute
 import (
 	//"fmt"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -44,7 +46,7 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 	return nil
 }
 
-func hostTraceRouter(timeout float64, args ...string) (string, error) {
+func hostTracerouter(timeout float64, args ...string) (string, error) {
 	bin, err := exec.LookPath("traceroute")
 	if err != nil {
 		return "", err
@@ -61,7 +63,7 @@ func (t *Traceroute) args(url string) []string {
 }
 
 type TracerouteHopInfo struct {
-	PacketNum int // 1-based index of the column number (usually [1:3])
+	ColumnNum int // 0-based index of the column number (usually [0:2])
 	Fqdn      string
 	Ip        string
 	RTT       float32 //milliseconds
@@ -74,16 +76,85 @@ func processTracerouteOutput(out string) (int, error) {
 	return numHops, nil
 }
 
-// processTracerouteHopLine parses
+// processTracerouteHopLine parses hop information
+// present after the header line outputted by traceroute
 func processTracerouteHopLine(line string) (int, []TracerouteHopInfo, error) {
+	var err error
 	hopInfo := []TracerouteHopInfo{}
-	return 0, hopInfo, nil
+	hopNumber, err := findHopNumber(line)
+	if err != nil {
+		return hopNumber, hopInfo, err
+	}
+
+	colEntries := findColumnEntries(line)
+
+	var fqdn, ip string
+	var rtt float32
+	for i, entry := range colEntries {
+		if entry != "*" {
+			fqdn, ip, rtt, err = processTracerouteColumnEntry(entry, i, fqdn, ip)
+			if err != nil {
+				return hopNumber, hopInfo, err
+			}
+			hopInfo = append(hopInfo, TracerouteHopInfo{
+				ColumnNum: i,
+				Fqdn:      fqdn,
+				Ip:        ip,
+				RTT:       rtt,
+			})
+		}
+	}
+
+	return hopNumber, hopInfo, err
+}
+
+func findHopNumber(line string) (int, error) {
+	re := regexp.MustCompile("^[\\d]+")
+	hopNumString := re.FindString(line)
+	return strconv.Atoi(hopNumString)
+}
+
+// findColumnEntries parses a line of traceroute output
+// and finds column entries signified by "*", or "[fqdn]? ([ip])? ms"
+func findColumnEntries(line string) []string {
+	re := regexp.MustCompile("\\*|(([\\w-]+(\\.[\\w]+)+)\\s\\(\\d+(\\.\\d+){3}\\)\\s*)?(\\d+\\.\\d+\\sms)")
+	return re.FindAllString(line, -1)
+}
+
+// processTracerouteColumnEntry parses column entry
+// and extracts fqdn, ip, rtt if available
+// in the case where the fqdn & ip are "carried over", the inputted fqdn, ip are used
+func processTracerouteColumnEntry(entry string, columnNum int, last_fqdn, last_ip string) (string, string, float32, error) {
+	fqdn, ip, rtt, err := processTracerouteColumnEntryHelper(entry)
+	if (fqdn == "" || ip == "") && columnNum > 0 {
+		fqdn = last_fqdn
+		ip = last_ip
+	}
+	return fqdn, ip, rtt, err
+}
+
+func processTracerouteColumnEntryHelper(entry string) (string, string, float32, error) {
+	fqdn_re := regexp.MustCompile("[\\w-]+(\\.[\\w]+)+")
+	fqdn := fqdn_re.FindString(entry)
+
+	ipv4_brackets_re := regexp.MustCompile("\\(\\d+(\\.\\d+){3}\\)")
+	ip_brackets := ipv4_brackets_re.FindString(entry)
+	ipv4_re := regexp.MustCompile("\\d+(\\.\\d+){3}")
+	ip := ipv4_re.FindString(ip_brackets)
+
+	rtt_whole_re := regexp.MustCompile("\\d+\\.\\d+\\sms")
+	rtt_phrase := rtt_whole_re.FindString(entry)
+	rtt_re := regexp.MustCompile("\\d+\\.\\d+")
+	rtt_string := rtt_re.FindString(rtt_phrase)
+	rtt64, err := strconv.ParseFloat(rtt_string, 32)
+	rtt := float32(rtt64)
+	return fqdn, ip, rtt, err
 }
 
 func init() {
 	inputs.Add("traceroute", func() telegraf.Input {
 		return &Traceroute{
-			tracerouteMethod: hostTraceRouter,
+			tracerouteMethod: hostTracerouter,
 		}
 	})
 }
