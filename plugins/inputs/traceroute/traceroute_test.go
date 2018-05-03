@@ -8,7 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var LinuxTracerouteOutput = `
+var (
+	LinuxTracerouteOutput = `
 traceroute to google.com (172.217.0.238), 30 hops max, 60 byte packets
  1  165.227.32.254 (165.227.32.254)  1.206 ms 165.227.32.253 (165.227.32.253)  1.188 ms 165.227.32.254 (165.227.32.254)  1.143 ms
  2  138.197.249.78 (138.197.249.78)  0.985 ms 138.197.249.86 (138.197.249.86)  0.939 ms 138.197.249.90 (138.197.249.90)  1.181 ms
@@ -17,6 +18,10 @@ traceroute to google.com (172.217.0.238), 30 hops max, 60 byte packets
  5  108.170.226.217 (108.170.226.217)  0.995 ms 108.170.226.219 (108.170.226.219)  1.033 ms 108.170.226.217 (108.170.226.217)  1.003 ms
  6  dfw06s38-in-f14.1e100.net (172.217.0.238)  1.187 ms  0.722 ms  0.545 ms
 `
+	LinuxTracerouteHeader = `traceroute to google.com (172.217.0.238), 30 hops max, 60 byte packets`
+	LinuxTracerouteFqdn   = `google.com`
+	LinuxTracerouteIp     = `172.217.0.238`
+)
 
 func MockHostTracerouter(timeout float64, args ...string) (string, error) {
 	return LinuxTracerouteOutput, nil
@@ -182,4 +187,10 @@ func TestProcessTracerouteHopLine(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, AllVoidTracerouteHopNumber, hopNumber, "hopNumber")
 	assert.True(t, reflect.DeepEqual([]TracerouteHopInfo{}, hopInfo))
+}
+
+func TestProcessTracerouteHeaderLine(t *testing.T) {
+	fqdn, ip := processTracerouteHeaderLine(LinuxTracerouteHeader)
+	assert.Equal(t, LinuxTracerouteFqdn, fqdn, "fqdn")
+	assert.Equal(t, LinuxTracerouteIp, ip, "ip")
 }

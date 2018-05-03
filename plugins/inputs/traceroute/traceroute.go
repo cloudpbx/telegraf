@@ -76,6 +76,20 @@ func processTracerouteOutput(out string) (int, error) {
 	return numHops, nil
 }
 
+// processTracerouteHeaderLine parses the top line of traceroute output
+// and outputs target fqdn & ip
+func processTracerouteHeaderLine(line string) (string, string) {
+	fqdn_re := regexp.MustCompile("[\\w-]+(\\.[\\w]+)+")
+	fqdn := fqdn_re.FindString(line)
+
+	ipv4_brackets_re := regexp.MustCompile("\\(\\d+(\\.\\d+){3}\\)")
+	ip_brackets := ipv4_brackets_re.FindString(line)
+	ipv4_re := regexp.MustCompile("\\d+(\\.\\d+){3}")
+	ip := ipv4_re.FindString(ip_brackets)
+
+	return fqdn, ip
+}
+
 // processTracerouteHopLine parses hop information
 // present after the header line outputted by traceroute
 func processTracerouteHopLine(line string) (int, []TracerouteHopInfo, error) {
