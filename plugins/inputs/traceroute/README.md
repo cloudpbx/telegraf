@@ -10,6 +10,8 @@ The traceroute plugin provides routing information given end host.
 [[inputs.traceroute]]
   ## List of urls to traceroute
   urls = ["www.google.com"] # required
+  ## per-traceroute timeout, in s. 0 == no timeout
+  # response_timeout = 0.0
   # interface = ""
 ```
 
@@ -23,7 +25,7 @@ The traceroute plugin provides routing information given end host.
     - result_code
         - 0:success
       	- 1:no such host
-    - field1 (type, unit)
+    - number_of_hops (int, # of hops made)
     - field2 (float, percent)
 
 - traceroute_hop_data
@@ -58,6 +60,7 @@ this information.
 measurement1,tag1=foo,tag2=bar field1=1i,field2=2.1 1453831884664956455
 measurement2,tag1=foo,tag2=bar,tag3=baz field3=1i 1453831884664956455
 ```
+
 
 Built by [mattfung](https://github.com/mattfung)
 

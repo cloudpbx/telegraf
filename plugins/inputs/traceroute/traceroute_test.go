@@ -42,7 +42,7 @@ func TestHostTracerouterSimple(t *testing.T) {
 	var tr *Traceroute
 	tr = &Traceroute{}
 	args := tr.args("google.com")
-	_, err := hostTracerouter(3, args...)
+	_, err := hostTracerouter(0, args...)
 	if err != nil {
 		t.Fatal("call failed:", err)
 	}
@@ -57,9 +57,8 @@ func TestHostTracerouteBadHost(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestProcessOutputSimple(t *testing.T) {
-	numHops, err := processTracerouteOutput(LinuxTracerouteOutput)
-	assert.NoError(t, err)
+func TestFindNumberOfHops(t *testing.T) {
+	numHops := findNumberOfHops(LinuxTracerouteOutput)
 	assert.Equal(t, 6, numHops, "6 hops made by packet")
 }
 

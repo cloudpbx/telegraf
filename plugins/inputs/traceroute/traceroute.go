@@ -2,10 +2,13 @@ package traceroute
 
 import (
 	//"fmt"
+	"bytes"
+	"net"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/influxdata/telegraf"
@@ -13,13 +16,23 @@ import (
 	"github.com/influxdata/telegraf/plugins/inputs"
 )
 
+const (
+	tr_measurement  = "traceroute"
+	hop_measurement = "traceroute_hop_data"
+	header_line_len = 1
+)
+
 type HostTracerouter func(timeout float64, args ...string) (string, error)
 
 // Traceroute struct should be named the same as the Plugin
 type Traceroute struct {
 
-	// urls to traceroute
+	// URLs to traceroute
 	Urls []string
+
+	// Total timeout duration each traceroute call, in seconds. 0 means no timeout
+	// Default: 0
+	ResponseTimeout float64 `toml:"response_timeout"`
 
 	// host traceroute function
 	tracerouteMethod HostTracerouter
@@ -33,7 +46,7 @@ func (t *Traceroute) Description() string {
 // SampleConfig will populate the sample configuration portion of the plugin's configuration
 const sampleConfig = `
 ## List of urls to traceroute
-urls = ["www.google.com"] # required
+urls = ["www.google.com","0.0.0.0"] # required
 `
 
 func (t *Traceroute) SampleConfig() string {
@@ -42,18 +55,68 @@ func (t *Traceroute) SampleConfig() string {
 
 // Gather defines what data the plugin will gather.
 func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
+	var wg sync.WaitGroup
+
+	for _, host_url := range t.Urls {
+		wg.Add(1)
+		go func(url string) {
+			defer wg.Done()
+			tags := map[string]string{"target_fqdn": url}
+			fields := make(map[string]interface{})
+
+			_, err := net.LookupHost(url)
+			if err != nil {
+				acc.AddError(err)
+				fields["result_code"] = 1
+				acc.AddFields(tr_measurement, fields, tags)
+				return
+			}
+
+			tr_args := t.args(url)
+			output, err := t.tracerouteMethod(t.ResponseTimeout, tr_args...)
+			outputLines := strings.Split(strings.TrimSpace(output), "\n")
+
+			var target_ip string
+			for i, line := range outputLines {
+				if i == 0 {
+					_, target_ip = processTracerouteHeaderLine(line)
+					tags["target_ip"] = target_ip
+					fields["number_of_hops"] = len(outputLines) - header_line_len
+				} else {
+
+				}
+			}
+			acc.AddFields(tr_measurement, fields, tags)
+
+		}(host_url)
+	}
 
 	return nil
 }
 
 func hostTracerouter(timeout float64, args ...string) (string, error) {
+	var out []byte
 	bin, err := exec.LookPath("traceroute")
 	if err != nil {
 		return "", err
 	}
 	c := exec.Command(bin, args...)
-	out, err := internal.CombinedOutputTimeout(c, time.Second*time.Duration(timeout+5))
+	if timeout == float64(0) {
+		out, err = executeWithoutTimeout(c)
+	} else {
+		out, err = internal.CombinedOutputTimeout(c, time.Second*time.Duration(timeout+5))
+	}
 	return string(out), err
+}
+
+func executeWithoutTimeout(c *exec.Cmd) ([]byte, error) {
+	var b bytes.Buffer
+	c.Stderr = &b
+	out, err := c.Output()
+	if err != nil {
+		out = b.Bytes()
+	}
+	return out, err
 }
 
 func (t *Traceroute) args(url string) []string {
@@ -67,13 +130,6 @@ type TracerouteHopInfo struct {
 	Fqdn      string
 	Ip        string
 	RTT       float32 //milliseconds
-}
-
-func processTracerouteOutput(out string) (int, error) {
-	var numHops int = -1
-	lines := strings.Split(strings.TrimSpace(out), "\n")
-	numHops = len(lines) - 1
-	return numHops, nil
 }
 
 var fqdn_re = regexp.MustCompile("[\\w-]+(\\.[\\w]+)+")
@@ -91,6 +147,13 @@ func processTracerouteHeaderLine(line string) (string, string) {
 	ip := ipv4_re.FindString(ip_brackets)
 
 	return fqdn, ip
+}
+
+func findNumberOfHops(out string) int {
+	var numHops int = -1
+	lines := strings.Split(strings.TrimSpace(out), "\n")
+	numHops = len(lines) - 1
+	return numHops
 }
 
 // processTracerouteHopLine parses hop information
@@ -166,6 +229,7 @@ func processTracerouteColumnEntryHelper(entry string) (string, string, float32, 
 func init() {
 	inputs.Add("traceroute", func() telegraf.Input {
 		return &Traceroute{
+			ResponseTimeout:  0,
 			tracerouteMethod: hostTracerouter,
 		}
 	})
