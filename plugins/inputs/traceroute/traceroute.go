@@ -76,15 +76,18 @@ func processTracerouteOutput(out string) (int, error) {
 	return numHops, nil
 }
 
+var fqdn_re = regexp.MustCompile("[\\w-]+(\\.[\\w]+)+")
+var ipv4_with_brackets_re = regexp.MustCompile("\\(\\d+(\\.\\d+){3}\\)")
+var ipv4_re = regexp.MustCompile("\\d+(\\.\\d+){3}")
+var rtt_with_ms_re = regexp.MustCompile("\\d+\\.\\d+\\sms")
+var rtt_re = regexp.MustCompile("\\d+\\.\\d+")
+
 // processTracerouteHeaderLine parses the top line of traceroute output
 // and outputs target fqdn & ip
 func processTracerouteHeaderLine(line string) (string, string) {
-	fqdn_re := regexp.MustCompile("[\\w-]+(\\.[\\w]+)+")
 	fqdn := fqdn_re.FindString(line)
 
-	ipv4_brackets_re := regexp.MustCompile("\\(\\d+(\\.\\d+){3}\\)")
-	ip_brackets := ipv4_brackets_re.FindString(line)
-	ipv4_re := regexp.MustCompile("\\d+(\\.\\d+){3}")
+	ip_brackets := ipv4_with_brackets_re.FindString(line)
 	ip := ipv4_re.FindString(ip_brackets)
 
 	return fqdn, ip
@@ -148,17 +151,12 @@ func processTracerouteColumnEntry(entry string, columnNum int, last_fqdn, last_i
 }
 
 func processTracerouteColumnEntryHelper(entry string) (string, string, float32, error) {
-	fqdn_re := regexp.MustCompile("[\\w-]+(\\.[\\w]+)+")
 	fqdn := fqdn_re.FindString(entry)
 
-	ipv4_brackets_re := regexp.MustCompile("\\(\\d+(\\.\\d+){3}\\)")
-	ip_brackets := ipv4_brackets_re.FindString(entry)
-	ipv4_re := regexp.MustCompile("\\d+(\\.\\d+){3}")
+	ip_brackets := ipv4_with_brackets_re.FindString(entry)
 	ip := ipv4_re.FindString(ip_brackets)
 
-	rtt_whole_re := regexp.MustCompile("\\d+\\.\\d+\\sms")
-	rtt_phrase := rtt_whole_re.FindString(entry)
-	rtt_re := regexp.MustCompile("\\d+\\.\\d+")
+	rtt_phrase := rtt_with_ms_re.FindString(entry)
 	rtt_string := rtt_re.FindString(rtt_phrase)
 	rtt64, err := strconv.ParseFloat(rtt_string, 32)
 	rtt := float32(rtt64)
