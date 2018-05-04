@@ -40,8 +40,28 @@ type Traceroute struct {
 	Urls []string
 
 	// Total timeout duration each traceroute call, in seconds. 0 means no timeout
-	// Default: 0
+	// Type: float
+	// Default: 0.0
 	ResponseTimeout float64 `toml:"response_timeout"`
+
+	// Wait time per probe in seconds (traceroute -w <WAITTIME>)
+	// Type: float
+	// Default: 5.0 sec
+	WaitTime float64 `toml:"waittime"`
+
+	// Starting TTL of packet (traceroute -f <FIRST_TTL>)
+	// Type: int
+	// Default: 1
+	FirstTTL int `toml:"first_ttl"`
+
+	// Maximum number of hops (hence TTL) traceroute will probe (traceroute -m <MAX_TTL>)
+	// Type: int
+	// Default: 30
+	MaxTTL int `toml:"max_ttl"`
+
+	// Source interface/address (traceroute -i <INTERFACE/SRC_ADDR>)
+	// Type: string
+	Interface string `toml:"interface"`
 
 	// host traceroute function
 	tracerouteMethod HostTracerouter
@@ -54,12 +74,20 @@ func (t *Traceroute) Description() string {
 
 // SampleConfig will populate the sample configuration portion of the plugin's configuration
 const sampleConfig = `
-## List of urls to traceroute
-urls = ["www.google.com","0.0.0.0"] # required[[inputs.traceroute]]
+# NOTE: this plugin forks the traceroute command. You may need to set capabilities
+# via setcap cap_net_raw+p /bin/traceroute
+  #
   ## List of urls to traceroute
   urls = ["www.google.com"] # required
   ## per-traceroute timeout, in s. 0 == no timeout
   # response_timeout = 0.0
+  ## wait time per probe in seconds (traceroute -w <WAITTIME>)
+  # waittime = 5.0
+  ## starting TTL of packet (traceroute -f <FIRST_TTL>)
+  # first_ttl = 1
+  ## maximum number of hops (hence TTL) traceroute will probe (traceroute -m <MAX_TTL>)
+  # max_ttl = 30
+  ## source interface/address to traceroute from (traceroute -i <INTERFACE/SRC_ADDR>)
   # interface = ""
 `
 
@@ -106,13 +134,13 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 						hopTags := map[string]string{
 							"target_fqdn":   target_fqdn,
 							"target_ip":     target_ip,
-							"hop_number":    strconv.Itoa(hopNumber),
 							"column_number": strconv.Itoa(info.ColumnNum),
 						}
 						hopFields := map[string]interface{}{
-							"hop_fqdn": info.Fqdn,
-							"hop_ip":   info.Ip,
-							"hop_rtt":  info.RTT,
+							"hop_number": hopNumber,
+							"hop_fqdn":   info.Fqdn,
+							"hop_ip":     info.Ip,
+							"hop_rtt":    info.RTT,
 						}
 						acc.AddFields(hop_measurement, hopFields, hopTags)
 					}
@@ -154,6 +182,18 @@ func executeWithoutTimeout(c *exec.Cmd) ([]byte, error) {
 func (t *Traceroute) args(url string) []string {
 	args := []string{url}
 	//args = append(args, url)
+	if t.WaitTime > 0.0 {
+		args = append(args, "-w", strconv.FormatFloat(t.WaitTime, 'f', -1, 64))
+	}
+	if t.FirstTTL > 0 {
+		args = append(args, "-f", strconv.Itoa(t.FirstTTL))
+	}
+	if t.MaxTTL > 0 && t.MaxTTL >= t.FirstTTL {
+		args = append(args, "-m", strconv.Itoa(t.MaxTTL))
+	}
+	if t.Interface != "" {
+		args = append(args, "-i", t.Interface)
+	}
 	return args
 }
 
@@ -263,6 +303,9 @@ func init() {
 	inputs.Add("traceroute", func() telegraf.Input {
 		return &Traceroute{
 			ResponseTimeout:  0,
+			WaitTime:         5.0,
+			FirstTTL:         1,
+			MaxTTL:           30,
 			tracerouteMethod: hostTracerouter,
 		}
 	})

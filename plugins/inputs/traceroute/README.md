@@ -12,6 +12,13 @@ The traceroute plugin provides routing information given end host.
   urls = ["www.google.com"] # required
   ## per-traceroute timeout, in s. 0 == no timeout
   # response_timeout = 0.0
+  ## wait time per probe in seconds (traceroute -w <WAITTIME>)
+  # waittime = 5.0
+  ## starting TTL of packet (traceroute -f <FIRST_TTL>)
+  # first_ttl = 1
+  ## maximum number of hops (hence TTL) traceroute will probe (traceroute -m <MAX_TTL>)
+  # max_ttl = 30
+  ## source interface/address to traceroute from (traceroute -i <INTERFACE/SRC_ADDR>)
   # interface = ""
 ```
 
@@ -32,9 +39,9 @@ The traceroute plugin provides routing information given end host.
   - tags:
     - target_fqdn
     - target_ip (IPv4 string)
-    - hop_number
     - column_number (zero-indexed value representing which column of the traceroute output the data resides in)
   - fields:
+    - hop_number
     - hop_fqdn
     - hop_ip (IPv4 string)
     - rtt (round trip time in ms)
