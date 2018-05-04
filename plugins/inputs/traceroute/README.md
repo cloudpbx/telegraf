@@ -58,3 +58,7 @@ this information.
 measurement1,tag1=foo,tag2=bar field1=1i,field2=2.1 1453831884664956455
 measurement2,tag1=foo,tag2=bar,tag3=baz field3=1i 1453831884664956455
 ```
+
+Built by [mattfung](https://github.com/mattfung)
+
+Sponsored by [CloudPBX](http://CloudPBX.ca) with generous support by the NSERC Experience Award.
