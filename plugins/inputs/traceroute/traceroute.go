@@ -1,8 +1,8 @@
 package traceroute
 
 import (
-	//"fmt"
 	"bytes"
+	"fmt"
 	"net"
 	"os/exec"
 	"regexp"
@@ -21,6 +21,15 @@ const (
 	hop_measurement = "traceroute_hop_data"
 	header_line_len = 1
 )
+
+type MalformedHopLineError struct {
+	line     string
+	errorMsg string
+}
+
+func (e *MalformedHopLineError) Error() string {
+	return fmt.Sprintf(`Hop line "%s" is malformed: %s`, e.line, e.errorMsg)
+}
 
 type HostTracerouter func(timeout float64, args ...string) (string, error)
 
@@ -46,7 +55,12 @@ func (t *Traceroute) Description() string {
 // SampleConfig will populate the sample configuration portion of the plugin's configuration
 const sampleConfig = `
 ## List of urls to traceroute
-urls = ["www.google.com","0.0.0.0"] # required
+urls = ["www.google.com","0.0.0.0"] # required[[inputs.traceroute]]
+  ## List of urls to traceroute
+  urls = ["www.google.com"] # required
+  ## per-traceroute timeout, in s. 0 == no timeout
+  # response_timeout = 0.0
+  # interface = ""
 `
 
 func (t *Traceroute) SampleConfig() string {
@@ -56,15 +70,16 @@ func (t *Traceroute) SampleConfig() string {
 // Gather defines what data the plugin will gather.
 func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 	var wg sync.WaitGroup
+	defer wg.Wait()
 
 	for _, host_url := range t.Urls {
 		wg.Add(1)
-		go func(url string) {
+		go func(target_fqdn string) {
 			defer wg.Done()
-			tags := map[string]string{"target_fqdn": url}
+			tags := map[string]string{"target_fqdn": target_fqdn}
 			fields := make(map[string]interface{})
 
-			_, err := net.LookupHost(url)
+			_, err := net.LookupHost(target_fqdn)
 			if err != nil {
 				acc.AddError(err)
 				fields["result_code"] = 1
@@ -72,7 +87,7 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 				return
 			}
 
-			tr_args := t.args(url)
+			tr_args := t.args(target_fqdn)
 			output, err := t.tracerouteMethod(t.ResponseTimeout, tr_args...)
 			outputLines := strings.Split(strings.TrimSpace(output), "\n")
 
@@ -83,7 +98,24 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 					tags["target_ip"] = target_ip
 					fields["number_of_hops"] = len(outputLines) - header_line_len
 				} else {
-
+					hopNumber, hopInfo, err := processTracerouteHopLine(line)
+					if err != nil {
+						acc.AddError(&MalformedHopLineError{line, err.Error()})
+					}
+					for _, info := range hopInfo {
+						hopTags := map[string]string{
+							"target_fqdn":   target_fqdn,
+							"target_ip":     target_ip,
+							"hop_number":    strconv.Itoa(hopNumber),
+							"column_number": strconv.Itoa(info.ColumnNum),
+						}
+						hopFields := map[string]interface{}{
+							"hop_fqdn": info.Fqdn,
+							"hop_ip":   info.Ip,
+							"hop_rtt":  info.RTT,
+						}
+						acc.AddFields(hop_measurement, hopFields, hopTags)
+					}
 				}
 			}
 			acc.AddFields(tr_measurement, fields, tags)
@@ -188,7 +220,8 @@ func processTracerouteHopLine(line string) (int, []TracerouteHopInfo, error) {
 	return hopNumber, hopInfo, err
 }
 
-func findHopNumber(line string) (int, error) {
+func findHopNumber(rawline string) (int, error) {
+	line := strings.TrimSpace(rawline)
 	re := regexp.MustCompile("^[\\d]+")
 	hopNumString := re.FindString(line)
 	return strconv.Atoi(hopNumString)

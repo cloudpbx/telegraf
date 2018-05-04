@@ -71,7 +71,7 @@ func TestGetHopNumber(t *testing.T) {
 }
 
 var (
-	NormalTracerouteLine      = `6  yyz10s03-in-f3.1e100.net (172.217.0.227)  1.480 ms  1.244 ms  0.417 ms`
+	NormalTracerouteLine      = ` 6  yyz10s03-in-f3.1e100.net (172.217.0.227)  1.480 ms  1.244 ms  0.417 ms`
 	NormalTracerouteEntries   = []string{"yyz10s03-in-f3.1e100.net (172.217.0.227)  1.480 ms", "1.244 ms", "0.417 ms"}
 	NormalTracerouteHopNumber = 6
 	NormalTracerouteHopInfo   = []TracerouteHopInfo{
