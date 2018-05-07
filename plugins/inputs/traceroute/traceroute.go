@@ -140,7 +140,7 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 							"hop_number": hopNumber,
 							"hop_fqdn":   info.Fqdn,
 							"hop_ip":     info.Ip,
-							"hop_rtt":    info.RTT,
+							"hop_rtt_ms": info.RTT,
 						}
 						acc.AddFields(hop_measurement, hopFields, hopTags)
 					}
