@@ -59,6 +59,19 @@ type Traceroute struct {
 	// Default: 30
 	MaxTTL int `toml:"max_ttl"`
 
+	// Number of probe packets sent per hop (traceroute -q <NQUERIES>)
+	// Type: int
+	// Default: 3
+	Nqueries int `toml:"nqueries"`
+
+	// Do not try to map IP addresses to host names (traceroute -n)
+	// Default: false
+	NoHostname bool `toml:"no_host_name"`
+
+	// Use ICMP packets (traceroute -I)
+	// Default: false
+	UseICMP bool `toml:"icmp"`
+
 	// Source interface/address (traceroute -i <INTERFACE/SRC_ADDR>)
 	// Type: string
 	Interface string `toml:"interface"`
@@ -87,6 +100,12 @@ const sampleConfig = `
   # first_ttl = 1
   ## maximum number of hops (hence TTL) traceroute will probe (traceroute -m <MAX_TTL>)
   # max_ttl = 30
+  ## number of probe packets sent per hop (traceroute -q <NQUERIES>)
+  # nqueries = 3
+  ## do not try to map IP addresses to host names (traceroute -n)
+  # no_host_name = false
+  ## use ICMP packets (traceroute -I)
+  # icmp = false
   ## source interface/address to traceroute from (traceroute -i <INTERFACE/SRC_ADDR>)
   # interface = ""
 `
@@ -191,6 +210,15 @@ func (t *Traceroute) args(url string) []string {
 	if t.MaxTTL > 0 && t.MaxTTL >= t.FirstTTL {
 		args = append(args, "-m", strconv.Itoa(t.MaxTTL))
 	}
+	if t.Nqueries > 0 {
+		args = append(args, "-q", strconv.Itoa(t.Nqueries))
+	}
+	if t.NoHostname {
+		args = append(args, "-n")
+	}
+	if t.UseICMP {
+		args = append(args, "-I")
+	}
 	if t.Interface != "" {
 		args = append(args, "-i", t.Interface)
 	}
@@ -248,6 +276,9 @@ func processTracerouteHopLine(line string) (int, []TracerouteHopInfo, error) {
 			if err != nil {
 				return hopNumber, hopInfo, err
 			}
+			if ip == "" {
+				ip = fqdn
+			}
 			hopInfo = append(hopInfo, TracerouteHopInfo{
 				ColumnNum: i,
 				Fqdn:      fqdn,
@@ -270,7 +301,7 @@ func findHopNumber(rawline string) (int, error) {
 // findColumnEntries parses a line of traceroute output
 // and finds column entries signified by "*", or "[fqdn]? ([ip])? ms"
 func findColumnEntries(line string) []string {
-	re := regexp.MustCompile("\\*|(([\\w-]+(\\.[\\w]+)+)\\s\\(\\d+(\\.\\d+){3}\\)\\s*)?(\\d+\\.\\d+\\sms)")
+	re := regexp.MustCompile("\\*|(([\\w-]+(\\.[\\w]+)+)\\s(\\(\\d+(\\.\\d+){0,3}\\))?\\s*)?(\\d+\\.\\d+\\sms)")
 	return re.FindAllString(line, -1)
 }
 
@@ -306,6 +337,9 @@ func init() {
 			WaitTime:         5.0,
 			FirstTTL:         1,
 			MaxTTL:           30,
+			Nqueries:         3,
+			NoHostname:       false,
+			UseICMP:          false,
 			tracerouteMethod: hostTracerouter,
 		}
 	})

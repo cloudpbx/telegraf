@@ -18,6 +18,12 @@ The traceroute plugin provides routing information given end host.
   # first_ttl = 1
   ## maximum number of hops (hence TTL) traceroute will probe (traceroute -m <MAX_TTL>)
   # max_ttl = 30
+  ## number of probe packets sent per hop (traceroute -q <NQUERIES>)
+  # nqueries = 3
+  ## do not try to map IP addresses to host names (traceroute -n)
+  # no_host_name = false
+  ## use ICMP packets (traceroute -I)
+  # icmp = false
   ## source interface/address to traceroute from (traceroute -i <INTERFACE/SRC_ADDR>)
   # interface = ""
 ```
@@ -93,6 +99,6 @@ GROUP BY "hop_number"
 ```
 
 
-Built by [mattfung](https://github.com/mattfung)
+[mattfung](https://github.com/mattfung)
 
 Sponsored by [CloudPBX](http://CloudPBX.ca) with generous support by the NSERC Experience Award.

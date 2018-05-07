@@ -11,7 +11,7 @@ import (
 var (
 	LinuxTracerouteOutput = `
 traceroute to google.com (172.217.0.238), 30 hops max, 60 byte packets
- 1  165.227.32.254 (165.227.32.254)  1.206 ms 165.227.32.253 (165.227.32.253)  1.188 ms 165.227.32.254 (165.227.32.254)  1.143 ms
+ 1  165.227.32.254 (165.227.32.254)  1.206 ms 165.227.32.253 (165.227.32.253)  1.188 ms 165.227.32.254 (165.227.32.254)  1.143 msg
  2  138.197.249.78 (138.197.249.78)  0.985 ms 138.197.249.86 (138.197.249.86)  0.939 ms 138.197.249.90 (138.197.249.90)  1.181 ms
  3  72.14.219.10 (72.14.219.10)  0.818 ms 162.243.190.33 (162.243.190.33)  0.952 ms  0.941 ms
  4  108.170.250.225 (108.170.250.225)  0.825 ms  0.970 ms 108.170.250.241 (108.170.250.241)  1.007 ms
@@ -114,9 +114,26 @@ var (
 		},
 	}
 )
-var AllVoidTracerouteLine = `5  * * *`
-var AllVoidTracerouteEntries = []string{"*", "*", "*"}
-var AllVoidTracerouteHopNumber = 5
+
+var (
+	NoHostTracerouteLine      = `10  129.250.2.81  186.767 ms`
+	NoHostTracerouteEntries   = []string{"129.250.2.81  186.767 ms"}
+	NoHostTracerouteHopNumber = 10
+	NoHostTracerouteHopInfo   = []TracerouteHopInfo{
+		TracerouteHopInfo{
+			ColumnNum: 0,
+			Fqdn:      "129.250.2.81",
+			Ip:        "129.250.2.81",
+			RTT:       186.767,
+		},
+	}
+)
+
+var (
+	AllVoidTracerouteLine      = `5  * * *`
+	AllVoidTracerouteEntries   = []string{"*", "*", "*"}
+	AllVoidTracerouteHopNumber = 5
+)
 
 func TestFindColumnEntries(t *testing.T) {
 	var entries []string
@@ -128,15 +145,21 @@ func TestFindColumnEntries(t *testing.T) {
 	assert.Equal(t, 3, len(entries), "3 entries")
 	assert.True(t, reflect.DeepEqual(SomeVoidTracerouteEntries, entries), "Expected: %s, Actual: %s", entries, SomeVoidTracerouteEntries)
 
+	entries = findColumnEntries(NoHostTracerouteLine)
+	assert.Equal(t, 1, len(entries), "1 entry")
+	assert.True(t, reflect.DeepEqual(NoHostTracerouteEntries, entries), "Expected: %s, Actual: %s", entries, NoHostTracerouteEntries)
+
 	entries = findColumnEntries(AllVoidTracerouteLine)
 	assert.Equal(t, 3, len(entries), "3 entries")
 	assert.True(t, reflect.DeepEqual(AllVoidTracerouteEntries, entries), "Expected: %s, Actual: %s", entries, AllVoidTracerouteEntries)
-
 }
 
-var IpFqdnColumnEntry = `12  54.239.110.174 (54.239.110.174)  22.609 ms`
-var HttpFqdnColumnEntry = `yyz10s03-in-f3.1e100.net (172.217.0.227)  1.480 ms`
-var CarryOverColumnEntry = `0.417 ms`
+var (
+	IpFqdnColumnEntry    = `12  54.239.110.174 (54.239.110.174)  22.609 ms`
+	HttpFqdnColumnEntry  = `yyz10s03-in-f3.1e100.net (172.217.0.227)  1.480 ms`
+	CarryOverColumnEntry = `0.417 ms`
+	NoHostColumnEntry    = `3  192.168.1.1  2.854 ms`
+)
 
 func TestProcessTracerouteColumnEntry(t *testing.T) {
 	var fqdn, ip string
@@ -163,6 +186,13 @@ func TestProcessTracerouteColumnEntry(t *testing.T) {
 	assert.Equal(t, carryOverFqdn, fqdn, "fqdn")
 	assert.Equal(t, carryOverIp, ip, "ip")
 	assert.InDelta(t, 0.417, rtt, acceptableDelta, "rtt")
+
+	fqdn, ip, rtt, err = processTracerouteColumnEntry(NoHostColumnEntry, 0, "", "")
+	assert.NoError(t, err)
+	assert.Equal(t, "192.168.1.1", fqdn, "fqdn")
+	assert.Equal(t, "", ip, "ip")
+	assert.InDelta(t, 2.854, rtt, acceptableDelta, "rtt")
+
 }
 
 func TestProcessTracerouteHopLine(t *testing.T) {
@@ -175,17 +205,22 @@ func TestProcessTracerouteHopLine(t *testing.T) {
 	hopNumber, hopInfo, err = processTracerouteHopLine(NormalTracerouteLine)
 	assert.NoError(t, err)
 	assert.Equal(t, NormalTracerouteHopNumber, hopNumber, "hopNumber")
-	assert.True(t, reflect.DeepEqual(NormalTracerouteHopInfo, hopInfo))
+	assert.True(t, reflect.DeepEqual(NormalTracerouteHopInfo, hopInfo), "Expected: %s Actual: %s", NormalTracerouteHopInfo, hopInfo)
 
 	hopNumber, hopInfo, err = processTracerouteHopLine(SomeVoidTracerouteLine)
 	assert.NoError(t, err)
 	assert.Equal(t, SomeVoidTracerouteHopNumber, hopNumber, "hopNumber")
-	assert.True(t, reflect.DeepEqual(SomeVoidTracerouteHopInfo, hopInfo))
+	assert.True(t, reflect.DeepEqual(SomeVoidTracerouteHopInfo, hopInfo), "Expected: %s Actual: %s", SomeVoidTracerouteHopInfo, hopInfo)
+
+	hopNumber, hopInfo, err = processTracerouteHopLine(NoHostTracerouteLine)
+	assert.NoError(t, err)
+	assert.Equal(t, NoHostTracerouteHopNumber, hopNumber, "hopNumber")
+	assert.True(t, reflect.DeepEqual(NoHostTracerouteHopInfo, hopInfo), "Expected: %s Actual: %s", NoHostTracerouteHopInfo, hopInfo)
 
 	hopNumber, hopInfo, err = processTracerouteHopLine(AllVoidTracerouteLine)
 	assert.NoError(t, err)
 	assert.Equal(t, AllVoidTracerouteHopNumber, hopNumber, "hopNumber")
-	assert.True(t, reflect.DeepEqual([]TracerouteHopInfo{}, hopInfo))
+	assert.True(t, reflect.DeepEqual([]TracerouteHopInfo{}, hopInfo), "Expected: %s Actual: %s", []TracerouteHopInfo{}, hopInfo)
 }
 
 func TestProcessTracerouteHeaderLine(t *testing.T) {
