@@ -7,11 +7,19 @@
   an [example configuration](./plugins/inputs/jolokia2/examples) to help you
   get started.
 
+- For plugins supporting TLS, you can now specify the certificate and keys
+  using `tls_ca`, `tls_cert`, `tls_key`.  These options behave the same as
+  the, now deprecated, `ssl` forms.
+
 ### New Inputs
 
 - [fibaro](./plugins/inputs/fibaro/README.md) - Contributed by @dynek
 - [mcrouter](./plugins/inputs/mcrouter/README.md) - Contributed by @cthayer
 - [nvidia_smi](./plugins/inputs/nvidia_smi/README.md) - Contributed by @jackzampolin
+
+### New Processors
+
+- [topk](./plugins/processors/topk/README.md) - Contributed by @mirath
 
 ### Features
 
@@ -25,6 +33,7 @@
 - [#4068](https://github.com/influxdata/telegraf/pull/4068): Add parameter to force the interval of gather for sysstat.
 - [#3877](https://github.com/influxdata/telegraf/pull/3877): Support busybox ping in the ping input.
 - [#4077](https://github.com/influxdata/telegraf/pull/4077): Add input plugin for McRouter.
+- [#4096](https://github.com/influxdata/telegraf/pull/4096): Add topk processor plugin.
 
 ### Bugfixes
 
@@ -38,6 +47,7 @@
 - [#4078](https://github.com/influxdata/telegraf/pull/4078): Use same timestamp for fields in system input.
 - [#4091](https://github.com/influxdata/telegraf/pull/4091): Fix handling of uint64 in datadog output.
 - [#4099](https://github.com/influxdata/telegraf/pull/4099): Ignore UTF8 BOM in JSON parser.
+- [#4104](https://github.com/influxdata/telegraf/issues/4104): Fix case for slave metrics in mysql input.
 
 ## v1.6.1 [2018-04-23]
 
