@@ -156,9 +156,9 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 							"column_number": strconv.Itoa(info.ColumnNum),
 							"hop_fqdn":      info.Fqdn,
 							"hop_ip":        info.Ip,
+							"hop_number":    strconv.Itoa(hopNumber),
 						}
 						hopFields := map[string]interface{}{
-							"hop_number": hopNumber,
 							"hop_rtt_ms": info.RTT,
 						}
 						acc.AddFields(hop_measurement, hopFields, hopTags)

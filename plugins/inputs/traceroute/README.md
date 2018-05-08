@@ -45,10 +45,10 @@ The traceroute plugin provides routing information given end host.
     - target_fqdn
     - target_ip (IPv4 string)
     - column_number (zero-indexed value representing which column of the traceroute output the data resides in)
-  - fields:
-    - hop_number
     - hop_fqdn
     - hop_ip (IPv4 string)
+    - hop_number (string)
+  - fields:
     - hop_rtt_ms (round trip time in ms)
 
 ### Sample Queries:
