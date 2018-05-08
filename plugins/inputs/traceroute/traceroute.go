@@ -115,6 +115,7 @@ func (t *Traceroute) SampleConfig() string {
 }
 
 // Gather defines what data the plugin will gather.
+/*
 func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
@@ -145,7 +146,8 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 					tags["target_ip"] = target_ip
 					fields["number_of_hops"] = len(outputLines) - header_line_len
 				} else {
-					hopNumber, hopInfo, err := processTracerouteHopLine(line)
+					//hopNumber, hopInfo, err := processTracerouteHopLine(line)
+					hopInfo, err := processTracerouteHopLine(line)
 					if err != nil {
 						acc.AddError(&MalformedHopLineError{line, err.Error()})
 					}
@@ -156,7 +158,7 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 							"column_number": strconv.Itoa(info.ColumnNum),
 							"hop_fqdn":      info.Fqdn,
 							"hop_ip":        info.Ip,
-							"hop_number":    strconv.Itoa(hopNumber),
+							"hop_number":    strconv.Itoa(info.HopNumber),
 						}
 						hopFields := map[string]interface{}{
 							"hop_rtt_ms": info.RTT,
@@ -171,6 +173,75 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 	}
 
 	return nil
+}
+*/
+func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	for _, host_url := range t.Urls {
+		wg.Add(1)
+		go func(target_fqdn string) {
+			defer wg.Done()
+			tags := map[string]string{"target_fqdn": target_fqdn}
+			fields := make(map[string]interface{})
+
+			_, err := net.LookupHost(target_fqdn)
+			if err != nil {
+				acc.AddError(err)
+				fields["result_code"] = 1
+				acc.AddFields(tr_measurement, fields, tags)
+				return
+			}
+
+			tr_args := t.args(target_fqdn)
+			output, err := t.tracerouteMethod(t.ResponseTimeout, tr_args...)
+
+			target_ip, number_of_hops, hop_info, err := parseTracerouteResults(output)
+			tags["target_ip"] = target_ip
+			fields["result_code"] = 1
+			fields["number_of_hops"] = number_of_hops
+			acc.AddFields(tr_measurement, fields, tags)
+
+			for _, info := range hop_info {
+				hopTags := map[string]string{
+					"target_fqdn":   target_fqdn,
+					"target_ip":     target_ip,
+					"column_number": strconv.Itoa(info.ColumnNum),
+					"hop_fqdn":      info.Fqdn,
+					"hop_ip":        info.Ip,
+					"hop_number":    strconv.Itoa(info.HopNumber),
+				}
+				hopFields := map[string]interface{}{
+					"hop_rtt_ms": info.RTT,
+				}
+				acc.AddFields(hop_measurement, hopFields, hopTags)
+			}
+
+		}(host_url)
+
+	}
+	return nil
+}
+
+func parseTracerouteResults(output string) (string, int, []TracerouteHopInfo, error) {
+	var target_ip string
+	outputLines := strings.Split(strings.TrimSpace(output), "\n")
+	number_of_hops := len(outputLines) - header_line_len
+	hop_info := []TracerouteHopInfo{}
+	for i, line := range outputLines {
+		if i == 0 {
+			_, target_ip = processTracerouteHeaderLine(line)
+		} else {
+			lineHopInfo, err := processTracerouteHopLine(line)
+			if err != nil {
+				return target_ip, number_of_hops, hop_info, err
+			}
+			hop_info = append(hop_info, lineHopInfo...)
+		}
+	}
+
+	return target_ip, number_of_hops, hop_info, nil
 }
 
 func hostTracerouter(timeout float64, args ...string) (string, error) {
@@ -226,6 +297,7 @@ func (t *Traceroute) args(url string) []string {
 }
 
 type TracerouteHopInfo struct {
+	HopNumber int // nth hop from root (ex. 1st hop = 1)
 	ColumnNum int // 0-based index of the column number (usually [0:2])
 	Fqdn      string
 	Ip        string
@@ -258,12 +330,12 @@ func findNumberOfHops(out string) int {
 
 // processTracerouteHopLine parses hop information
 // present after the header line outputted by traceroute
-func processTracerouteHopLine(line string) (int, []TracerouteHopInfo, error) {
+func processTracerouteHopLine(line string) ([]TracerouteHopInfo, error) {
 	var err error
 	hopInfo := []TracerouteHopInfo{}
 	hopNumber, err := findHopNumber(line)
 	if err != nil {
-		return hopNumber, hopInfo, err
+		return hopInfo, err
 	}
 
 	colEntries := findColumnEntries(line)
@@ -274,12 +346,13 @@ func processTracerouteHopLine(line string) (int, []TracerouteHopInfo, error) {
 		if entry != "*" {
 			fqdn, ip, rtt, err = processTracerouteColumnEntry(entry, i, fqdn, ip)
 			if err != nil {
-				return hopNumber, hopInfo, err
+				return hopInfo, err
 			}
 			if ip == "" {
 				ip = fqdn
 			}
 			hopInfo = append(hopInfo, TracerouteHopInfo{
+				HopNumber: hopNumber,
 				ColumnNum: i,
 				Fqdn:      fqdn,
 				Ip:        ip,
@@ -288,7 +361,7 @@ func processTracerouteHopLine(line string) (int, []TracerouteHopInfo, error) {
 		}
 	}
 
-	return hopNumber, hopInfo, err
+	return hopInfo, err
 }
 
 func findHopNumber(rawline string) (int, error) {
