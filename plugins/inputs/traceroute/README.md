@@ -39,7 +39,6 @@ The traceroute plugin provides routing information given end host.
         - 0:success
       	- 1:no such host
     - number_of_hops (int, # of hops made)
-    - field2 (float, percent)
 
 - traceroute_hop_data
   - tags:
