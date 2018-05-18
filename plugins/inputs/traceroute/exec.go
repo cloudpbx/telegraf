@@ -47,6 +47,10 @@ type Traceroute struct {
 	// Default: false
 	UseICMP bool `toml:"icmp"`
 
+	// Lookup AS path in routes (traceroute -A)
+	// Default: false
+	ASPathLookups bool `toml:"as_path_lookups"`
+
 	// Source interface/address (traceroute -i <INTERFACE/SRC_ADDR>)
 	// Type: string
 	Interface string `toml:"interface"`
@@ -85,6 +89,9 @@ func (t *Traceroute) args(url string) []string {
 	}
 	if t.UseICMP {
 		args = append(args, "-I")
+	}
+	if t.ASPathLookups {
+		args = append(args, "-A")
 	}
 	if t.Interface != "" {
 		args = append(args, "-i", t.Interface)
