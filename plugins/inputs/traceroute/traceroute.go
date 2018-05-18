@@ -44,6 +44,8 @@ const sampleConfig = `
   # no_host_name = false
   ## use ICMP packets (traceroute -I)
   # icmp = false
+  ## Lookup AS path in routes (traceroute -A)
+  # as_path_lookups = false
   ## source interface/address to traceroute from (traceroute -i <INTERFACE/SRC_ADDR>)
   # interface = ""
 `
@@ -76,16 +78,17 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 			tr_args := t.args(target_fqdn)
 			output, err := t.tracerouteMethod(t.ResponseTimeout, tr_args...)
 
-			target_ip, number_of_hops, hop_info, err := parseTracerouteResults(output)
-			tags["target_ip"] = target_ip
-			fields["result_code"] = 1
-			fields["number_of_hops"] = number_of_hops
+			//target_ip, number_of_hops, hop_info, err := parseTracerouteResults(output)
+			results, err := parseTracerouteResults(output)
+			tags["target_ip"] = results.Target_ip
+			fields["result_code"] = 0
+			fields["number_of_hops"] = results.Number_of_hops
 			acc.AddFields(tr_measurement, fields, tags)
 
-			for _, info := range hop_info {
+			for _, info := range results.Hop_info {
 				hopTags := map[string]string{
-					"target_fqdn":   target_fqdn,
-					"target_ip":     target_ip,
+					"target_fqdn":   results.Target_fqdn,
+					"target_ip":     results.Target_ip,
 					"column_number": strconv.Itoa(info.ColumnNum),
 					"hop_fqdn":      info.Fqdn,
 					"hop_ip":        info.Ip,
@@ -93,6 +96,7 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 				}
 				hopFields := map[string]interface{}{
 					"hop_rtt_ms": info.RTT,
+					"hop_asn":    info.Asn,
 				}
 				acc.AddFields(hop_measurement, hopFields, hopTags)
 			}

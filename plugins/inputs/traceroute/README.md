@@ -25,6 +25,8 @@ The traceroute plugin provides routing information given end host.
   # no_host_name = false
   ## use ICMP packets (traceroute -I)
   # icmp = false
+  ## Lookup AS path in routes (traceroute -A)
+  # as_path_lookups = false
   ## source interface/address to traceroute from (traceroute -i <INTERFACE/SRC_ADDR>)
   # interface = ""
 ```
@@ -51,6 +53,7 @@ The traceroute plugin provides routing information given end host.
     - hop_number (string)
   - fields:
     - hop_rtt_ms (round trip time in ms)
+    - hop_asn (ASN number ex. "AS1234" or multiple ASN's ex. "AS1234/AS5678" of hop ip)
 
 ### Sample Queries:
 
