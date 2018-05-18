@@ -14,12 +14,18 @@
 ### New Inputs
 
 - [fibaro](./plugins/inputs/fibaro/README.md) - Contributed by @dynek
+- [jti_openconfig_telemetry](./plugins/inputs/jti_openconfig_telemetry/README.md) - Contributed by @ajhai
 - [mcrouter](./plugins/inputs/mcrouter/README.md) - Contributed by @cthayer
 - [nvidia_smi](./plugins/inputs/nvidia_smi/README.md) - Contributed by @jackzampolin
 
 ### New Processors
 
 - [topk](./plugins/processors/topk/README.md) - Contributed by @mirath
+
+### New Outputs
+
+- [http](./plugins/outputs/http/README.md) - Contributed by @Dark0096
+- [application_insights](./plugins/outputs/application_insights/README.md): Contribute by @karolz-ms
 
 ### Features
 
@@ -34,13 +40,28 @@
 - [#3877](https://github.com/influxdata/telegraf/pull/3877): Support busybox ping in the ping input.
 - [#4077](https://github.com/influxdata/telegraf/pull/4077): Add input plugin for McRouter.
 - [#4096](https://github.com/influxdata/telegraf/pull/4096): Add topk processor plugin.
+- [#4114](https://github.com/influxdata/telegraf/pull/4114): Add cursor metrics to mongodb input.
+- [#3455](https://github.com/influxdata/telegraf/pull/3455): Add tag/integer pair for result to net_response.
+- [#4010](https://github.com/influxdata/telegraf/pull/3455): Add application_insights output plugin.
 
 ### Bugfixes
 
 - [#4018](https://github.com/influxdata/telegraf/pull/4018): Write to working file outputs if any files are not writeable.
 - [#4036](https://github.com/influxdata/telegraf/pull/4036): Add all win_perf_counters fields for a series in a single metric.
+- [#4118](https://github.com/influxdata/telegraf/pull/4118): Report results of dns_query instead of 0ms on timeout.
+- [#4155](https://github.com/influxdata/telegraf/pull/4155): Add consul service tags to metric.
 
-## v1.6.2 [unreleased]
+## v1.6.3 [unreleased]
+
+### Bugfixes
+
+- [#4127](https://github.com/influxdata/telegraf/issues/4127): Fix intermittent panic in aerospike input.
+- [#4130](https://github.com/influxdata/telegraf/issues/4130): Fix connection leak in jolokia2_agent.
+- [#4136](https://github.com/influxdata/telegraf/pull/4130): Fix jolokia2 timeout parsing.
+- [#4142](https://github.com/influxdata/telegraf/pull/4142): Fix error parsing dropwizard metrics.
+- [#4149](https://github.com/influxdata/telegraf/issues/4149): Fix librato output support for uint and bool.
+
+## v1.6.2 [2018-05-08]
 
 ### Bugfixes
 
@@ -48,6 +69,7 @@
 - [#4091](https://github.com/influxdata/telegraf/pull/4091): Fix handling of uint64 in datadog output.
 - [#4099](https://github.com/influxdata/telegraf/pull/4099): Ignore UTF8 BOM in JSON parser.
 - [#4104](https://github.com/influxdata/telegraf/issues/4104): Fix case for slave metrics in mysql input.
+- [#4110](https://github.com/influxdata/telegraf/issues/4110): Fix uint support in cratedb output.
 
 ## v1.6.1 [2018-04-23]
 
