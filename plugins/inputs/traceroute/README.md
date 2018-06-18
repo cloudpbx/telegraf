@@ -81,27 +81,17 @@ GROUP BY "hop_number"
 
 #### traceroute_hop_data
 ```
-> traceroute_hop_data,column_number=0,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="165.227.32.253",hop_ip="165.227.32.253",hop_number=1,hop_rtt_ms=3.5250000953674316 1525474707000000000
-> traceroute_hop_data,column_number=1,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="165.227.32.254",hop_ip="165.227.32.254",hop_number=1,hop_rtt_ms=3.071000099182129 1525474707000000000
-> traceroute_hop_data,column_number=2,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="165.227.32.253",hop_ip="165.227.32.253",hop_number=1,hop_rtt_ms=3.4200000762939453 1525474707000000000
-> traceroute_hop_data,column_number=0,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="138.197.249.78",hop_ip="138.197.249.78",hop_number=2,hop_rtt_ms=3.4010000228881836 1525474707000000000
-> traceroute_hop_data,column_number=1,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="138.197.249.82",hop_ip="138.197.249.82",hop_number=2,hop_rtt_ms=3.5429999828338623 1525474707000000000
-> traceroute_hop_data,column_number=2,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="138.197.249.78",hop_ip="138.197.249.78",hop_number=2,hop_rtt_ms=3.3429999351501465 1525474707000000000
-> traceroute_hop_data,column_number=0,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="72.14.219.10",hop_ip="72.14.219.10",hop_number=3,hop_rtt_ms=2.0139999389648438 1525474707000000000
-> traceroute_hop_data,column_number=1,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="162.243.190.33",hop_ip="162.243.190.33",hop_number=3,hop_rtt_ms=3.315999984741211 1525474707000000000
-> traceroute_hop_data,column_number=2,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="162.243.190.33",hop_ip="162.243.190.33",hop_number=3,hop_rtt_ms=2.9059998989105225 1525474707000000000
-> traceroute_hop_data,column_number=0,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="108.170.250.225",hop_ip="108.170.250.225",hop_number=4,hop_rtt_ms=1.559000015258789 1525474707000000000
-> traceroute_hop_data,column_number=1,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="108.170.250.241",hop_ip="108.170.250.241",hop_number=4,hop_rtt_ms=0.7829999923706055 1525474707000000000
-> traceroute_hop_data,column_number=2,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="108.170.250.225",hop_ip="108.170.250.225",hop_number=4,hop_rtt_ms=1.5080000162124634 1525474707000000000
-> traceroute_hop_data,column_number=0,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="216.239.35.229",hop_ip="216.239.35.229",hop_number=5,hop_rtt_ms=2.947000026702881 1525474707000000000
-> traceroute_hop_data,column_number=1,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="216.239.35.231",hop_ip="216.239.35.231",hop_number=5,hop_rtt_ms=2.9040000438690186 1525474707000000000
-> traceroute_hop_data,column_number=2,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="216.239.35.229",hop_ip="216.239.35.229",hop_number=5,hop_rtt_ms=2.5940001010894775 1525474707000000000
-> traceroute_hop_data,column_number=0,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="yyz10s13-in-f4.1e100.net",hop_ip="172.217.0.100",hop_number=6,hop_rtt_ms=2.010999917984009 1525474707000000000
-> traceroute_hop_data,column_number=1,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="yyz10s13-in-f4.1e100.net",hop_ip="172.217.0.100",hop_number=6,hop_rtt_ms=0.6510000228881836 1525474707000000000
-> traceroute_hop_data,column_number=2,host=m1.cloudpbx.ca,target_fqdn=www.google.com,target_ip=172.217.0.100 hop_fqdn="yyz10s13-in-f4.1e100.net",hop_ip="172.217.0.100",hop_number=6,hop_rtt_ms=0.6190000176429749 1525474707000000000
+> traceroute,host=m1_cloudpbx,target_fqdn=www.google.com,target_ip=172.217.9.68 number_of_hops=9i,result_code=0i 1529342902000000000
+> traceroute_hop_data,column_number=0,hop_fqdn=167.99.176.254,hop_ip=167.99.176.254,hop_number=1,host=m1_cloudpbx,target_fqdn=www.google.com,target_ip=172.217.9.68 hop_asn="",hop_rtt_ms=4.804999828338623 1529342902000000000
+> traceroute_hop_data,column_number=0,hop_fqdn=138.197.249.90,hop_ip=138.197.249.90,hop_number=2,host=m1_cloudpbx,target_fqdn=www.google.com,target_ip=172.217.9.68 hop_asn="",hop_rtt_ms=0.9390000104904175 1529342902000000000
+> traceroute_hop_data,column_number=0,hop_fqdn=162.243.190.33,hop_ip=162.243.190.33,hop_number=3,host=m1_cloudpbx,target_fqdn=www.google.com,target_ip=172.217.9.68 hop_asn="",hop_rtt_ms=1.1859999895095825 1529342902000000000
+> traceroute_hop_data,column_number=0,hop_fqdn=108.170.250.227,hop_ip=108.170.250.227,hop_number=4,host=m1_cloudpbx,target_fqdn=www.google.com,target_ip=172.217.9.68 hop_asn="",hop_rtt_ms=1.125 1529342902000000000
+> traceroute_hop_data,column_number=0,hop_fqdn=74.125.252.132,hop_ip=74.125.252.132,hop_number=5,host=m1_cloudpbx,target_fqdn=www.google.com,target_ip=172.217.9.68 hop_asn="",hop_rtt_ms=15.60099983215332 1529342902000000000
+> traceroute_hop_data,column_number=0,hop_fqdn=209.85.249.137,hop_ip=209.85.249.137,hop_number=6,host=m1_cloudpbx,target_fqdn=www.google.com,target_ip=172.217.9.68 hop_asn="",hop_rtt_ms=16.5 1529342902000000000
+> traceroute_hop_data,column_number=0,hop_fqdn=108.170.243.174,hop_ip=108.170.243.174,hop_number=7,host=m1_cloudpbx,target_fqdn=www.google.com,target_ip=172.217.9.68 hop_asn="",hop_rtt_ms=17.04599952697754 1529342902000000000
+> traceroute_hop_data,column_number=0,hop_fqdn=72.14.239.115,hop_ip=72.14.239.115,hop_number=8,host=m1_cloudpbx,target_fqdn=www.google.com,target_ip=172.217.9.68 hop_asn="",hop_rtt_ms=14.781000137329102 1529342902000000000
+> traceroute_hop_data,column_number=0,hop_fqdn=ord38s09-in-f4.1e100.net,hop_ip=172.217.9.68,hop_number=9,host=m1_cloudpbx,target_fqdn=www.google.com,target_ip=172.217.9.68 hop_asn="",hop_rtt_ms=18.89900016784668 1529342902000000000
 ```
 
-
-[mattfung](https://github.com/mattfung)
 
 Sponsored by [CloudPBX](http://CloudPBX.ca) with generous support by the NSERC Experience Award.
