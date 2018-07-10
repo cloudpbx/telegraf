@@ -65,8 +65,8 @@ var ipv4_with_brackets_re = regexp.MustCompile("\\(\\d+(\\.\\d+){3}\\)")
 var ipv4_re = regexp.MustCompile("\\d+(\\.\\d+){3}")
 var rtt_with_ms_re = regexp.MustCompile("\\d+\\.\\d+\\sms")
 var rtt_re = regexp.MustCompile("\\d+\\.\\d+")
-var asn_with_brackets_re = regexp.MustCompile("\\[(\\*|(AS[\\d]+)(\\/(AS[\\d]+))?)\\]")
-var asn_re = regexp.MustCompile("(\\*|(AS[\\d]+)(\\/(AS[\\d]+))?)")
+var asn_with_brackets_re = regexp.MustCompile("\\[(\\*|((AS|as)[\\d]+)(\\/((AS|as)[\\d]+))?)\\]")
+var asn_re = regexp.MustCompile("(\\*|((AS|as)[\\d]+)(\\/((AS|as)[\\d]+))?)")
 
 // processTracerouteHeaderLine parses the top line of traceroute output
 // and outputs target fqdn & ip
@@ -131,7 +131,7 @@ func findHopNumber(rawline string) (int, error) {
 	return strconv.Atoi(hopNumString)
 }
 
-var column_entry_re = regexp.MustCompile("\\*|(([\\w-]+(\\.[\\w-]+)+)\\s(\\(\\d+(\\.\\d+){0,3}\\))?\\s*(\\[(\\*|((AS[\\d]+)(\\/AS[\\d]+)*))\\])?\\s*)?(\\d+\\.\\d+\\sms)")
+var column_entry_re = regexp.MustCompile("\\*|(([\\w-]+(\\.[\\w-]+)+)\\s(\\(\\d+(\\.\\d+){0,3}\\))?\\s*(\\[(\\*|(((AS|as)[\\d]+)(\\/(AS|as)[\\d]+)*))\\])?\\s*)?(\\d+\\.\\d+\\sms)")
 
 // findColumnEntries parses a line of traceroute output
 // and finds column entries signified by "*", or "[fqdn]? ([ip])? ms"

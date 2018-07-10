@@ -61,6 +61,7 @@ var TR_Line_Test_Suite = []TR_Line_Test{
 	NoHost_TR_Line_Test,
 	AllVoid_TR_Line_Test,
 	NoHost_ASN_1_TR_Line_Test,
+	LowerCaseAs_TR_Line_Test,
 }
 var (
 	NormalTracerouteLine      = ` 6  yyz10s03-in-f3.1e100.net (172.217.0.227)  1.480 ms  1.244 ms  0.417 ms`
@@ -268,6 +269,44 @@ var (
 		HopInfo:      []TracerouteHopInfo{},
 	}
 )
+
+var (
+	LowerCaseAsTracerouteLine      = `6  206.248.155.168 [as13768]  86.202 ms  68.356 ms  68.281 ms`
+	LowerCaseAsTracerouteEntries   = []string{"206.248.155.168 [as13768]  86.202 ms", "68.356 ms", "68.281 ms"}
+	LowerCaseAsTracerouteHopNumber = 6
+	LowerCaseAsTracerouteHopInfo   = []TracerouteHopInfo{
+		TracerouteHopInfo{
+			HopNumber: LowerCaseAsTracerouteHopNumber,
+			ColumnNum: 0,
+			Fqdn:      "206.248.155.168",
+			Ip:        "206.248.155.168",
+			Asn:       "as13768",
+			RTT:       86.202,
+		},
+		TracerouteHopInfo{
+			HopNumber: LowerCaseAsTracerouteHopNumber,
+			ColumnNum: 1,
+			Fqdn:      "206.248.155.168",
+			Ip:        "206.248.155.168",
+			Asn:       "as13768",
+			RTT:       68.356,
+		},
+		TracerouteHopInfo{
+			HopNumber: LowerCaseAsTracerouteHopNumber,
+			ColumnNum: 2,
+			Fqdn:      "206.248.155.168",
+			Ip:        "206.248.155.168",
+			Asn:       "as13768",
+			RTT:       68.281,
+		},
+	}
+	LowerCaseAs_TR_Line_Test = TR_Line_Test{
+		Line:         LowerCaseAsTracerouteLine,
+		Entries:      LowerCaseAsTracerouteEntries,
+		NumberOfHops: LowerCaseAsTracerouteHopNumber,
+		HopInfo:      LowerCaseAsTracerouteHopInfo,
+	}
+) 
 
 func TestFindColumnEntries(t *testing.T) {
 	var entries []string
