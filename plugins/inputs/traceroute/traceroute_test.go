@@ -424,3 +424,94 @@ func TestProcessTracerouteHeaderLine(t *testing.T) {
 	assert.Equal(t, LinuxTracerouteFqdn, fqdn, "fqdn")
 	assert.Equal(t, LinuxTracerouteIp, ip, "ip")
 }
+
+type StatusEndpointTest struct {
+	Data        TracerouteOutputData
+	Result_code int
+	Rtt         float32
+}
+
+//var StatusEndpointTestData []StatusEndpointTest
+var StatusEndpointTestData = []StatusEndpointTest{
+	StatusEndpointTest{
+		Data: TracerouteOutputData{
+			Number_of_hops: 3,
+			Hop_info: []TracerouteHopInfo{
+				TracerouteHopInfo{
+					HopNumber: 1,
+					ColumnNum: 1,
+					RTT:       1.234,
+				},
+				TracerouteHopInfo{
+					HopNumber: 2,
+
+					ColumnNum: 1,
+					RTT:       2.345,
+				},
+				TracerouteHopInfo{
+					HopNumber: 3,
+					ColumnNum: 1,
+					RTT:       3.456,
+				},
+			},
+		},
+		Result_code: SUCCESS,
+		Rtt:         2.345,
+	},
+	StatusEndpointTest{
+		Data: TracerouteOutputData{
+			Number_of_hops: 3,
+			Hop_info: []TracerouteHopInfo{
+				TracerouteHopInfo{
+					HopNumber: 1,
+					ColumnNum: 1,
+					RTT:       1.234,
+				},
+				TracerouteHopInfo{
+					HopNumber: 3,
+					ColumnNum: 1,
+					RTT:       3.456,
+				},
+			},
+		},
+		Result_code: PARTIAL_SUCCESS,
+		Rtt:         3.456,
+	},
+	StatusEndpointTest{
+		Data: TracerouteOutputData{
+			Number_of_hops: 4,
+			Hop_info: []TracerouteHopInfo{
+				TracerouteHopInfo{
+					HopNumber: 1,
+					ColumnNum: 1,
+					RTT:       1.234,
+				},
+				TracerouteHopInfo{
+					HopNumber: 2,
+					ColumnNum: 1,
+					RTT:       3.456,
+				},
+			},
+		},
+		Result_code: PARTIAL_SUCCESS,
+		Rtt:         3.456,
+	},
+	StatusEndpointTest{
+		Data: TracerouteOutputData{
+			Number_of_hops: 4,
+			Hop_info:       []TracerouteHopInfo{},
+		},
+		Result_code: NO_CONTENT,
+		Rtt:         0,
+	},
+}
+
+func TestGetStatusAndEndpointRtt(t *testing.T) {
+	for _, test := range StatusEndpointTestData {
+		status, rtt := GetStatusAndEndpointRtt(test.Data)
+		assert.Equal(t, test.Result_code, status)
+		if test.Result_code != NO_CONTENT {
+			assert.Equal(t, test.Rtt, rtt)
+		}
+	}
+}

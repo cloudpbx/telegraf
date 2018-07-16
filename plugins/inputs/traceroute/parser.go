@@ -10,6 +10,13 @@ import (
 const header_line_len = 1
 const VOID_ASN_VALUE = "*"
 
+const (
+	SUCCESS         = 200
+	NO_CONTENT      = 204
+	PARTIAL_SUCCESS = 206
+	HOST_NOT_FOUND  = 404
+)
+
 type MalformedHopLineError struct {
 	line     string
 	errorMsg string
@@ -169,4 +176,24 @@ func processTracerouteColumnEntryHelper(entry string) (string, string, string, f
 	rtt64, err := strconv.ParseFloat(rtt_string, 32)
 	rtt := float32(rtt64)
 	return fqdn, ip, asn, rtt, err
+}
+
+func GetStatusAndEndpointRtt(result TracerouteOutputData) (int, float32) {
+	// Assumes hops are in ascending order by hop number
+	var largest_rtt float32
+	second_last_mile_hop := result.Number_of_hops - 1
+	if len(result.Hop_info) == 0 {
+		return NO_CONTENT, largest_rtt
+	}
+	for _, hop := range result.Hop_info {
+		if hop.HopNumber == second_last_mile_hop {
+			// last hop == target?
+			last_hop := result.Hop_info[len(result.Hop_info)-1]
+			if last_hop.Ip == result.Target_ip {
+				return SUCCESS, hop.RTT
+			}
+		}
+		largest_rtt = hop.RTT
+	}
+	return PARTIAL_SUCCESS, largest_rtt
 }

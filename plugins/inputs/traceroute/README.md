@@ -39,9 +39,19 @@ The traceroute plugin provides routing information given end host.
     - target_ip (IPv4 string)
   - fields:
     - result_code
-        - 0:success
-      	- 1:no such host
+        - 200:success
+	  - data available for both last hop and second last hop
+	- 204:no content
+	  - traceroute returns with no hop information
+	- 206:partial success
+	  - traceroute may not have reached end point but some hops are returned
+      	- 404:no such host
     - number_of_hops (int, # of hops made)
+    - endpoint_rtt_ms (round trip time in ms)
+      - if result_code == 200:
+      	- the latency of the second last hop. This avoids added latency due to last mile routing
+      - if result_code == 206:
+      	- the latency of the largest hop
 
 - traceroute_hop_data
   - tags:

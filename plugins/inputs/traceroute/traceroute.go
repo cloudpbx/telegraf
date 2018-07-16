@@ -70,7 +70,7 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 			_, err := net.LookupHost(target_fqdn)
 			if err != nil {
 				acc.AddError(err)
-				fields["result_code"] = 1
+				fields["result_code"] = HOST_NOT_FOUND
 				acc.AddFields(tr_measurement, fields, tags)
 				return
 			}
@@ -81,7 +81,7 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 			//target_ip, number_of_hops, hop_info, err := parseTracerouteResults(output)
 			results, err := parseTracerouteResults(output)
 			tags["target_ip"] = results.Target_ip
-			fields["result_code"] = 0
+			fields["result_code"], fields["endpoint_rtt_ms"] = GetStatusAndEndpointRtt(results)
 			fields["number_of_hops"] = results.Number_of_hops
 			acc.AddFields(tr_measurement, fields, tags)
 
