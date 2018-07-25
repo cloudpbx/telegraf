@@ -37,6 +37,9 @@ The traceroute plugin provides routing information given end host.
   - tags:
     - target_fqdn 
     - target_ip (IPv4 string)
+    - host_internal_ip (IPv4 string)
+    - host_external_ip (IPv4 string)
+    - host_mac_addr 
   - fields:
     - result_code
         - 200:success
@@ -57,6 +60,9 @@ The traceroute plugin provides routing information given end host.
   - tags:
     - target_fqdn
     - target_ip (IPv4 string)
+    - host_internal_ip (IPv4 string)
+    - host_external_ip (IPv4 string)
+    - host_mac_addr
     - column_number (zero-indexed value representing which column of the traceroute output the data resides in)
     - hop_fqdn
     - hop_ip (IPv4 string)

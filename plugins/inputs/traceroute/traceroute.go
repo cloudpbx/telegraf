@@ -10,6 +10,7 @@ import (
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/internal"
 	"github.com/influxdata/telegraf/plugins/inputs"
+	"github.com/influxdata/telegraf/plugins/inputs/traceroute/iplookup"
 )
 
 const (
@@ -59,7 +60,7 @@ func (t *Traceroute) SampleConfig() string {
 func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
-
+	netId := iplookup.FindNetId()
 	for _, host_url := range t.Urls {
 		wg.Add(1)
 		go func(target_fqdn string) {
@@ -81,18 +82,24 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 			//target_ip, number_of_hops, hop_info, err := parseTracerouteResults(output)
 			results, err := parseTracerouteResults(output)
 			tags["target_ip"] = results.Target_ip
+			tags["host_internal_ip"] = netId.InternalIPString
+			tags["host_external_ip"] = netId.ExternalIPString
+			tags["host_mac_addr"] = netId.MacAddrString
 			fields["result_code"], fields["endpoint_rtt_ms"] = GetStatusAndEndpointRtt(results)
 			fields["number_of_hops"] = results.Number_of_hops
 			acc.AddFields(tr_measurement, fields, tags)
 
 			for _, info := range results.Hop_info {
 				hopTags := map[string]string{
-					"target_fqdn":   results.Target_fqdn,
-					"target_ip":     results.Target_ip,
-					"column_number": strconv.Itoa(info.ColumnNum),
-					"hop_fqdn":      info.Fqdn,
-					"hop_ip":        info.Ip,
-					"hop_number":    strconv.Itoa(info.HopNumber),
+					"host_internal_ip": netId.InternalIPString,
+					"host_external_ip": netId.ExternalIPString,
+					"host_mac_addr":    netId.MacAddrString,
+					"target_fqdn":      results.Target_fqdn,
+					"target_ip":        results.Target_ip,
+					"column_number":    strconv.Itoa(info.ColumnNum),
+					"hop_fqdn":         info.Fqdn,
+					"hop_ip":           info.Ip,
+					"hop_number":       strconv.Itoa(info.HopNumber),
 				}
 				hopFields := map[string]interface{}{
 					"hop_rtt_ms": info.RTT,
