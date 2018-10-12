@@ -41,6 +41,8 @@ The traceroute plugin provides routing information given end host.
     - host_external_ip (IPv4 string)
     - host_mac_addr 
   - fields:
+    - version (string)
+      - version of traceroute representation
     - result_code
         - 200:success
 	  - data available for both last hop and second last hop
@@ -68,6 +70,7 @@ The traceroute plugin provides routing information given end host.
     - hop_ip (IPv4 string)
     - hop_number (string)
   - fields:
+    - version ("1.000")
     - hop_rtt_ms (round trip time in ms)
     - hop_asn (ASN number ex. "AS1234" or multiple ASN's ex. "AS1234/AS5678" of hop ip)
 

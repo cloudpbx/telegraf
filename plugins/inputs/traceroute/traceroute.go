@@ -16,6 +16,7 @@ import (
 const (
 	tr_measurement  = "traceroute"
 	hop_measurement = "traceroute_hop_data"
+	version         = "2.000"
 )
 
 // Description will appear directly above the plugin definition in the config file
@@ -85,6 +86,7 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 			tags["host_internal_ip"] = netId.InternalIPString
 			tags["host_external_ip"] = netId.ExternalIPString
 			tags["host_mac_addr"] = netId.MacAddrString
+			fields["version"] = version
 			fields["result_code"], fields["endpoint_rtt_ms"] = GetStatusAndEndpointRtt(results)
 			fields["number_of_hops"] = results.Number_of_hops
 			acc.AddFields(tr_measurement, fields, tags)
@@ -101,7 +103,9 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 					"hop_ip":           info.Ip,
 					"hop_number":       strconv.Itoa(info.HopNumber),
 				}
+
 				hopFields := map[string]interface{}{
+					"version":    version,
 					"hop_rtt_ms": info.RTT,
 					"hop_asn":    info.Asn,
 				}
