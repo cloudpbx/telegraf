@@ -3,14 +3,15 @@ package traceroute
 import (
 	"net"
 	"os/exec"
-	"strconv"
 	"sync"
 	"time"
 
+	"github.com/cloudpbx/ive-measurement/iplookup"
+	tr "github.com/cloudpbx/ive-measurement/msm/traceroute"
+	"github.com/cloudpbx/ive-measurement/msm/traceroute/metric"
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/internal"
 	"github.com/influxdata/telegraf/plugins/inputs"
-	"github.com/influxdata/telegraf/plugins/inputs/traceroute/iplookup"
 )
 
 const (
@@ -61,7 +62,7 @@ func (t *Traceroute) SampleConfig() string {
 func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
-	netId := iplookup.FindNetId()
+	netID := iplookup.FindNetID()
 	for _, host_url := range t.Urls {
 		wg.Add(1)
 		go func(target_fqdn string) {
@@ -72,49 +73,49 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 			_, err := net.LookupHost(target_fqdn)
 			if err != nil {
 				acc.AddError(err)
-				fields["result_code"] = HOST_NOT_FOUND
+				fields["result_code"] = tr.HostNotFound
 				acc.AddFields(tr_measurement, fields, tags)
 				return
 			}
 
 			tr_args := t.args(target_fqdn)
-			output, err := t.tracerouteMethod(t.ResponseTimeout, tr_args...)
-
-			//target_ip, number_of_hops, hop_info, err := parseTracerouteResults(output)
-			results, err := parseTracerouteResults(output)
-			tags["target_ip"] = results.Target_ip
-			tags["host_internal_ip"] = netId.InternalIPString
-			tags["host_external_ip"] = netId.ExternalIPString
-			tags["host_mac_addr"] = netId.MacAddrString
-			fields["version"] = version
-			fields["result_code"], fields["endpoint_rtt_ms"] = GetStatusAndEndpointRtt(results)
-			fields["number_of_hops"] = results.Number_of_hops
-			acc.AddFields(tr_measurement, fields, tags)
-
-			for _, info := range results.Hop_info {
-				hopTags := map[string]string{
-					"host_internal_ip": netId.InternalIPString,
-					"host_external_ip": netId.ExternalIPString,
-					"host_mac_addr":    netId.MacAddrString,
-					"target_fqdn":      results.Target_fqdn,
-					"target_ip":        results.Target_ip,
-					"column_number":    strconv.Itoa(info.ColumnNum),
-					"hop_fqdn":         info.Fqdn,
-					"hop_ip":           info.Ip,
-					"hop_number":       strconv.Itoa(info.HopNumber),
-				}
-
-				hopFields := map[string]interface{}{
-					"version":    version,
-					"hop_rtt_ms": info.RTT,
-					"hop_asn":    info.Asn,
-				}
-				acc.AddFields(hop_measurement, hopFields, hopTags)
+			rawOutput, err := t.tracerouteMethod(t.ResponseTimeout, tr_args...)
+			if err != nil {
+				acc.AddError(err)
+				return
 			}
+
+			output, err := tr.ParseTracerouteResults(rawOutput)
+			if err != nil {
+				acc.AddError(err)
+				return
+			}
+
+			pacc := &pluginAccumulator{acc: acc}
+			dummyHost := "will be deleted"
+			dummyTime := time.Now()
+			metric.ParseTROutput(pacc, output, netID, dummyHost, dummyTime)
 
 		}(host_url)
 
 	}
+	return nil
+}
+
+type pluginAccumulator struct {
+	sync.Mutex
+	acc telegraf.Accumulator
+}
+
+func (pacc *pluginAccumulator) Add(name string,
+	tags map[string]string,
+	fields map[string]interface{},
+	_ time.Time,
+) error {
+	pacc.Lock()
+	defer pacc.Unlock()
+	delete(tags, "host")
+	pacc.acc.AddFields(name, fields, tags)
 	return nil
 }
 
