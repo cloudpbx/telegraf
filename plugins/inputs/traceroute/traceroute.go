@@ -63,7 +63,10 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 	netID := iplookup.FindNetID()
-	for _, host_url := range t.Urls {
+	pacc := &pluginAccumulator{acc: acc}
+	dummyHost := "will be deleted"
+	dummyTime := time.Now()
+	for i, host_url := range t.Urls {
 		wg.Add(1)
 		go func(target_fqdn string) {
 			defer wg.Done()
@@ -72,32 +75,30 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 
 			_, err := net.LookupHost(target_fqdn)
 			if err != nil {
-				acc.AddError(err)
+				pacc.AddError(err)
 				fields["result_code"] = tr.HostNotFound
-				acc.AddFields(tr_measurement, fields, tags)
+				pacc.Add(tr_measurement, tags, fields, dummyTime)
 				return
 			}
 
 			tr_args := t.args(target_fqdn)
 			rawOutput, err := t.tracerouteMethod(t.ResponseTimeout, tr_args...)
 			if err != nil {
-				acc.AddError(err)
+				pacc.AddError(err)
 				return
 			}
 
 			output, err := tr.ParseTracerouteResults(rawOutput)
 			if err != nil {
-				acc.AddError(err)
+				pacc.AddError(err)
 				return
 			}
-
-			pacc := &pluginAccumulator{acc: acc}
-			dummyHost := "will be deleted"
-			dummyTime := time.Now()
 			metric.ParseTROutput(pacc, output, netID, dummyHost, dummyTime)
 
 		}(host_url)
-
+		if (i%50) == 0 && (i > 0) {
+			time.Sleep(50 * time.Millisecond)
+		}
 	}
 	return nil
 }
@@ -117,6 +118,13 @@ func (pacc *pluginAccumulator) Add(name string,
 	delete(tags, "host")
 	pacc.acc.AddFields(name, fields, tags)
 	return nil
+}
+
+func (pacc *pluginAccumulator) AddError(err error) {
+	pacc.Lock()
+	defer pacc.Unlock()
+	pacc.acc.AddError(err)
+	return
 }
 
 func hostTracerouter(timeout float64, args ...string) (string, error) {
