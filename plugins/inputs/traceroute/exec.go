@@ -1,3 +1,15 @@
+/*
+
+  Telegraf Traceroute Input Plugin
+
+  telegraf/plugins/inputs/traceroute/
+  |_ exec.go
+  |_ parser.go
+  |_ README.md
+  |_ traceroute.go
+  |_ traceroute_test.go
+
+*/
 package traceroute
 
 import (
@@ -6,6 +18,7 @@ import (
 	"strconv"
 )
 
+// HostTracerouter defines the parameter of traceroute process function
 type HostTracerouter func(timeout float64, args ...string) (string, error)
 
 // Traceroute struct should be named the same as the Plugin

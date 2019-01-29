@@ -13,16 +13,16 @@ import (
 )
 
 const (
-	tr_measurement  = "traceroute"
-	hop_measurement = "traceroute_hop_data"
+	trMeasurement  = "traceroute"
+	hopMeasurement = "traceroute_hop_data"
 )
 
-// Description will appear directly above the plugin definition in the config file
+// Description will appear directly above the plugin definition in the config file.
 func (t *Traceroute) Description() string {
 	return "Traceroutes given url(s) and return statistics"
 }
 
-// SampleConfig will populate the sample configuration portion of the plugin's configuration
+// sampleConfig will populate the sample configuration portion of the plugin's configuration.
 const sampleConfig = `
 # NOTE: this plugin forks the traceroute command. You may need to set capabilities
 # via setcap cap_net_raw+p /bin/traceroute
@@ -50,40 +50,37 @@ const sampleConfig = `
   # interface = ""
 `
 
+// SampleConfig prints an example of Traceroute plugin configuration.
 func (t *Traceroute) SampleConfig() string {
 	return sampleConfig
 }
 
 // Gather defines what data the plugin will gather.
-
 func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 	var wg sync.WaitGroup
 	defer wg.Wait()
 
-	for _, host_url := range t.Urls {
+	for _, hostURL := range t.Urls {
 		wg.Add(1)
 		go func(target_fqdn string) {
 			defer wg.Done()
 			tags := map[string]string{"target_fqdn": target_fqdn}
 			fields := make(map[string]interface{})
-
 			_, err := net.LookupHost(target_fqdn)
 			if err != nil {
 				acc.AddError(err)
 				fields["result_code"] = 1
-				acc.AddFields(tr_measurement, fields, tags)
+				acc.AddFields(trMeasurement, fields, tags)
 				return
 			}
+			trArgs := t.args(target_fqdn)
+			output, err := t.tracerouteMethod(t.ResponseTimeout, trArgs...)
 
-			tr_args := t.args(target_fqdn)
-			output, err := t.tracerouteMethod(t.ResponseTimeout, tr_args...)
-
-			//target_ip, number_of_hops, hop_info, err := parseTracerouteResults(output)
 			results, err := parseTracerouteResults(output)
 			tags["target_ip"] = results.Target_ip
 			fields["result_code"] = 0
 			fields["number_of_hops"] = results.Number_of_hops
-			acc.AddFields(tr_measurement, fields, tags)
+			acc.AddFields(trMeasurement, fields, tags)
 
 			for _, info := range results.Hop_info {
 				hopTags := map[string]string{
@@ -98,15 +95,15 @@ func (t *Traceroute) Gather(acc telegraf.Accumulator) error {
 					"hop_rtt_ms": info.RTT,
 					"hop_asn":    info.Asn,
 				}
-				acc.AddFields(hop_measurement, hopFields, hopTags)
+				acc.AddFields(hopMeasurement, hopFields, hopTags)
 			}
-
-		}(host_url)
+		}(hostURL)
 
 	}
 	return nil
 }
 
+// hostTracerouter is an implementation of HostTraceRouter which calls the traceroute shell command.
 func hostTracerouter(timeout float64, args ...string) (string, error) {
 	var out []byte
 	bin, err := exec.LookPath("traceroute")
@@ -122,6 +119,7 @@ func hostTracerouter(timeout float64, args ...string) (string, error) {
 	return string(out), err
 }
 
+// init initializes the traceroute plugin.
 func init() {
 	inputs.Add("traceroute", func() telegraf.Input {
 		return &Traceroute{
